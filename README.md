@@ -63,8 +63,9 @@ GateBridge/
    - 或者直接放在项目根目录（运行时会自动提取）
 
 4. **配置文件**：
-   - `src/main/resources/gate.yml` 是默认配置文件
-   - 首次运行时会自动提取到工作目录
+   - 复制 `gate.yml.example` 为 `gate.yml`
+   - 将 `gate.yml` 放入 `src/main/resources/` 目录
+   - 或者直接放在项目根目录（运行时会自动提取）
 
 ### 构建项目
 
