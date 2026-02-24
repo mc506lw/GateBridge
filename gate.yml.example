@@ -1,0 +1,55 @@
+# Gate 配置文件示例
+# 将此文件重命名为 gate.yml 并根据需要修改配置
+
+config:
+  # 监听 Minecraft 客户端连接的绑定地址。
+  bind: 0.0.0.0:25565
+  
+  # Lite（轻量）模式配置
+  lite:
+    # 启用 Lite 模式。
+    enabled: true
+    
+    # 代理根据匹配到的虚拟主机地址，将玩家连接重定向到的路由表。
+    routes:
+      # 将虚拟主机地址匹配到后端服务器。
+      - host: localhost
+        # 如果匹配成功，则连接到此处的后端服务器。
+        backend: localhost:25566
+        # 当此路由的所有后端都离线时，可选的备用状态响应。
+        fallback:
+          motd: |
+            §cLocalhost 服务器离线。
+            §e请稍后再试！
+          version:
+            name: '§c请稍后再试！'
+            protocol: -1
+
+  # Gate 等待连接到服务器之前的超时时间。
+  connectionTimeout: 5s
+  # Gate 等待从服务器接收数据之前的超时时间。
+  readTimeout: 30s
+  # 启用额外的调试日志（仅用于调试目的）。
+  debug: false
+  # 代理协议 (HA-Proxy) 决定 Gate 是否应该为玩家支持代理协议。
+  proxyProtocol: false
+  # 配额设置允许对特定操作的 IP（截取最后一段）进行速率限制。
+  quota:
+    # 限制同一 IP 范围可以建立的新连接数。
+    connections:
+      enabled: true
+      ops: 5
+      burst: 10
+      maxEntries: 1000
+
+# Connect 的配置
+connect:
+  # 启用 Connect 会使 Gate 将自己注册到 Connect 网络。
+  enabled: false
+
+# Gate HTTP API 配置。
+api:
+  # 是否为 Gate 启用 API。
+  enabled: false
+  # 监听 API 连接的绑定地址。
+  bind: localhost:8080
