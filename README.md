@@ -1,6 +1,6 @@
 # GateBridge
 
-一个专业的 Minecraft 代理服务器项目，基于 Gate 构建。
+能让你在面板中运行 GateBridge 的项目
 
 ## 项目结构
 
