@@ -1,0 +1,28 @@
+==========================================================================
+==  NOTICE file corresponding to the section 4(d) of the Apache License, ==
+==  Version 2.0, for the Gate component                                   ==
+==========================================================================
+
+本产品包含由 minekube 开发的 Gate。
+该产品遵循 Apache License, Version 2.0 (the "License")。
+你不得使用本文件除非符合许可证。
+你可以在以下地址获得许可证副本：
+http://www.apache.org/licenses/LICENSE-2.0
+
+除非适用法律要求或书面同意，否则根据许可证分发的软件分布在"AS IS"基础上分发，
+无任何明示或暗示的保证或条件。
+请参阅许可证以了解管理权限和限制的具体语言。
+
+Copyright 2024 minekube
+
+This product includes software developed by the Gate project
+(https://github.com/minekube/gate).
+
+--------------------------------------------------------------------------
+
+==========================================================================
+==  本项目自有声明 (MIT License)                                        ==
+==========================================================================
+
+本项目主代码遵循 MIT 许可证。
+Copyright 2026 GateBridge Contributors
