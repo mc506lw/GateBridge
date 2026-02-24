@@ -1,22 +1,23 @@
 package com.gatebridge;
 
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 
 public class ServerCore {
-    private static final String GATE_VERSION = "1.2.5";
+    private static final String GATE_VERSION = "0.62.3";
     private static final String GATE_BINARY_NAME = isWindows() ? "gate.exe" : "gate";
     private static final String CONFIG_NAME = "gate.yml";
-    
+
     private static final String[] GITHUB_MIRRORS = {
-        "https://gh-proxy.org/",
-        "https://v6.gh-proxy.org/",
-        "https://cdn.gh-proxy.org/",
-        "https://edgeone.gh-proxy.org/",
-        "https://hk.gh-proxy.org/"
+            "https://gh-proxy.org/",
+            "https://v6.gh-proxy.org/",
+            "https://cdn.gh-proxy.org/",
+            "https://edgeone.gh-proxy.org/",
+            "https://hk.gh-proxy.org/"
     };
 
     public static void main(String[] args) throws Exception {
@@ -74,27 +75,22 @@ public class ServerCore {
         }
 
         String originalUrl = String.format(
-            "https://github.com/minekube/gate/releases/download/v%s/gate-%s-%s.exe",
-            GATE_VERSION, GATE_VERSION, platform
-        );
+                "https://github.com/minekube/gate/releases/download/v%s/gate_%s_%s",
+                GATE_VERSION, GATE_VERSION, platform);
 
-        if (!os.contains("win")) {
-            originalUrl = originalUrl.replace(".exe", "");
+        if (os.contains("win")) {
+            originalUrl += ".exe";
         }
 
         IOException lastException = null;
-        
+
         for (String mirror : GITHUB_MIRRORS) {
             String downloadUrl = mirror + originalUrl;
             System.out.println("[ServerCore] Trying mirror: " + mirror);
             System.out.println("[ServerCore] Downloading Gate from: " + downloadUrl);
-            
+
             try {
-                URL url = new URL(downloadUrl);
-                try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-                     FileOutputStream fos = new FileOutputStream(gateBinary)) {
-                    fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-                }
+                downloadWithRedirect(downloadUrl, gateBinary);
                 System.out.println("[ServerCore] Gate downloaded successfully from " + mirror);
                 return;
             } catch (Exception e) {
@@ -105,8 +101,34 @@ public class ServerCore {
                 }
             }
         }
-        
+
         throw new IOException("Failed to download Gate from all mirrors", lastException);
+    }
+
+    private static void downloadWithRedirect(String urlString, File outputFile) throws IOException {
+        URL url = new URL(urlString);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+        connection.setInstanceFollowRedirects(true);
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+        connection.setConnectTimeout(30000);
+        connection.setReadTimeout(30000);
+
+        int responseCode = connection.getResponseCode();
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            throw new IOException("HTTP response code: " + responseCode);
+        }
+
+        try (InputStream in = connection.getInputStream();
+                FileOutputStream out = new FileOutputStream(outputFile)) {
+
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = in.read(buffer)) > 0) {
+                out.write(buffer, 0, len);
+            }
+        }
     }
 
     private static void setupConfigFile(File gateConfig) throws IOException {
@@ -128,14 +150,14 @@ public class ServerCore {
 
         Process process = pb.start();
         int exitCode = process.waitFor();
-        
+
         System.out.println("[ServerCore] Gate process terminated with code: " + exitCode);
     }
 
     private static boolean extractResource(String resourcePath, String destinationPath) throws IOException {
         try (InputStream in = ServerCore.class.getResourceAsStream(resourcePath);
-             OutputStream out = new FileOutputStream(destinationPath)) {
-            
+                OutputStream out = new FileOutputStream(destinationPath)) {
+
             if (in == null) {
                 return false;
             }

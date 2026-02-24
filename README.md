@@ -27,7 +27,7 @@ GateBridge 是专为服务器面板（Docker 环境）设计的 Minecraft 代理
 2. **准备文件**：
    - 下载 Gate 二进制文件（使用加速链接）：
      ```
-     https://gh-proxy.org/https://github.com/minekube/gate/releases/download/v1.2.5/gate-1.2.5-linux-amd64
+     https://gh-proxy.org/https://github.com/minekube/gate/releases/download/v0.62.3/gate_0.62.3-linux-amd64
      ```
    - 重命名为 `gate`（Linux）或 `gate.exe`（Windows）
    - 复制 `gate.yml.example` 为 `gate.yml` 并修改配置
