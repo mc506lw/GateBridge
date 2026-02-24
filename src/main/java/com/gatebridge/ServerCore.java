@@ -1,24 +1,11 @@
 package com.gatebridge;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 
 public class ServerCore {
-    private static final String GATE_VERSION = "0.62.3";
     private static final String GATE_BINARY_NAME = isWindows() ? "gate.exe" : "gate";
     private static final String CONFIG_NAME = "gate.yml";
-
-    private static final String[] GITHUB_MIRRORS = {
-            "https://gh-proxy.org/",
-            "https://v6.gh-proxy.org/",
-            "https://cdn.gh-proxy.org/",
-            "https://edgeone.gh-proxy.org/",
-            "https://hk.gh-proxy.org/"
-    };
 
     public static void main(String[] args) throws Exception {
         String dir = System.getProperty("user.dir");
@@ -27,7 +14,6 @@ public class ServerCore {
 
         System.out.println("[ServerCore] Initializing environment...");
         System.out.println("[ServerCore] Working Directory: " + dir);
-        System.out.println("[ServerCore] Gate Version: " + GATE_VERSION);
 
         setupGateBinary(gateBinary);
         setupConfigFile(gateConfig);
@@ -46,88 +32,14 @@ public class ServerCore {
         boolean extracted = extractResource("/" + GATE_BINARY_NAME, gateBinary.getPath());
 
         if (!extracted) {
-            System.out.println("[ServerCore] Gate binary not found in resources, downloading from GitHub...");
-            downloadGate(gateBinary);
+            throw new FileNotFoundException(
+                    "Gate binary not found in resources. " +
+                            "Please place " + GATE_BINARY_NAME
+                            + " in src/main/resources/ directory and rebuild the JAR.");
         }
 
         if (!gateBinary.setExecutable(true, false)) {
             System.err.println("[ServerCore] Warning: Failed to set executable permission for 'gate'.");
-        }
-    }
-
-    private static void downloadGate(File gateBinary) throws IOException {
-        String os = System.getProperty("os.name").toLowerCase();
-        String arch = System.getProperty("os.arch").toLowerCase();
-
-        String platform;
-        if (os.contains("win")) {
-            platform = "windows";
-        } else if (os.contains("mac")) {
-            platform = "darwin";
-        } else {
-            platform = "linux";
-        }
-
-        if (arch.contains("64")) {
-            platform += "-amd64";
-        } else {
-            platform += "-386";
-        }
-
-        String originalUrl = String.format(
-                "https://github.com/minekube/gate/releases/download/v%s/gate_%s_%s",
-                GATE_VERSION, GATE_VERSION, platform);
-
-        if (os.contains("win")) {
-            originalUrl += ".exe";
-        }
-
-        IOException lastException = null;
-
-        for (String mirror : GITHUB_MIRRORS) {
-            String downloadUrl = mirror + originalUrl;
-            System.out.println("[ServerCore] Trying mirror: " + mirror);
-            System.out.println("[ServerCore] Downloading Gate from: " + downloadUrl);
-
-            try {
-                downloadWithRedirect(downloadUrl, gateBinary);
-                System.out.println("[ServerCore] Gate downloaded successfully from " + mirror);
-                return;
-            } catch (Exception e) {
-                System.err.println("[ServerCore] Failed to download from " + mirror + ": " + e.getMessage());
-                lastException = new IOException("Failed to download from " + mirror, e);
-                if (gateBinary.exists()) {
-                    gateBinary.delete();
-                }
-            }
-        }
-
-        throw new IOException("Failed to download Gate from all mirrors", lastException);
-    }
-
-    private static void downloadWithRedirect(String urlString, File outputFile) throws IOException {
-        URL url = new URL(urlString);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-        connection.setInstanceFollowRedirects(true);
-        connection.setRequestMethod("GET");
-        connection.setRequestProperty("User-Agent", "Mozilla/5.0");
-        connection.setConnectTimeout(30000);
-        connection.setReadTimeout(30000);
-
-        int responseCode = connection.getResponseCode();
-        if (responseCode != HttpURLConnection.HTTP_OK) {
-            throw new IOException("HTTP response code: " + responseCode);
-        }
-
-        try (InputStream in = connection.getInputStream();
-                FileOutputStream out = new FileOutputStream(outputFile)) {
-
-            byte[] buffer = new byte[8192];
-            int len;
-            while ((len = in.read(buffer)) > 0) {
-                out.write(buffer, 0, len);
-            }
         }
     }
 
