@@ -10,6 +10,14 @@ public class ServerCore {
     private static final String GATE_VERSION = "1.2.5";
     private static final String GATE_BINARY_NAME = isWindows() ? "gate.exe" : "gate";
     private static final String CONFIG_NAME = "gate.yml";
+    
+    private static final String[] GITHUB_MIRRORS = {
+        "https://gh-proxy.org/",
+        "https://v6.gh-proxy.org/",
+        "https://cdn.gh-proxy.org/",
+        "https://edgeone.gh-proxy.org/",
+        "https://hk.gh-proxy.org/"
+    };
 
     public static void main(String[] args) throws Exception {
         String dir = System.getProperty("user.dir");
@@ -65,27 +73,40 @@ public class ServerCore {
             platform += "-386";
         }
 
-        String downloadUrl = String.format(
+        String originalUrl = String.format(
             "https://github.com/minekube/gate/releases/download/v%s/gate-%s-%s.exe",
             GATE_VERSION, GATE_VERSION, platform
         );
 
         if (!os.contains("win")) {
-            downloadUrl = downloadUrl.replace(".exe", "");
+            originalUrl = originalUrl.replace(".exe", "");
         }
 
-        System.out.println("[ServerCore] Downloading Gate from: " + downloadUrl);
+        IOException lastException = null;
         
-        try {
-            URL url = new URL(downloadUrl);
-            try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-                 FileOutputStream fos = new FileOutputStream(gateBinary)) {
-                fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+        for (String mirror : GITHUB_MIRRORS) {
+            String downloadUrl = mirror + originalUrl;
+            System.out.println("[ServerCore] Trying mirror: " + mirror);
+            System.out.println("[ServerCore] Downloading Gate from: " + downloadUrl);
+            
+            try {
+                URL url = new URL(downloadUrl);
+                try (ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+                     FileOutputStream fos = new FileOutputStream(gateBinary)) {
+                    fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+                }
+                System.out.println("[ServerCore] Gate downloaded successfully from " + mirror);
+                return;
+            } catch (Exception e) {
+                System.err.println("[ServerCore] Failed to download from " + mirror + ": " + e.getMessage());
+                lastException = new IOException("Failed to download from " + mirror, e);
+                if (gateBinary.exists()) {
+                    gateBinary.delete();
+                }
             }
-            System.out.println("[ServerCore] Gate downloaded successfully.");
-        } catch (Exception e) {
-            throw new IOException("Failed to download Gate: " + e.getMessage(), e);
         }
+        
+        throw new IOException("Failed to download Gate from all mirrors", lastException);
     }
 
     private static void setupConfigFile(File gateConfig) throws IOException {

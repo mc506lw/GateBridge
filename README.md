@@ -1,148 +1,83 @@
 # GateBridge
 
-能让你在面板中运行 GateBridge 的项目
+能让你在面板（Java Docker 环境）中运行 Gate 的项目。
 
-## 项目结构
+## 简介
 
-```
-GateBridge/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/
-│   │   │       └── gatebridge/
-│   │   │           └── ServerCore.java
-│   │   └── resources/
-│   │       ├── gate.yml          # Gate 配置文件
-│   │       └── gate.exe          # Gate 二进制文件（内置）
-│   └── test/
-│       ├── java/
-│       └── resources/
-├── gradle/
-│   └── wrapper/
-│       └── gradle-wrapper.properties
-├── libs/                          # 外部依赖库
-├── build.gradle                   # Gradle 构建配置
-├── settings.gradle                # Gradle 设置
-├── gradle.properties              # Gradle 属性配置
-├── gradlew                        # Unix/Linux/Mac 启动脚本
-└── gradlew.bat                    # Windows 启动脚本
-```
+GateBridge 是专为服务器面板（Docker 环境）设计的 Minecraft 代理服务器，基于 Gate 构建。
 
-## 功能特性
+### 特性
 
-- **自动下载 Gate**：如果本地没有 Gate 二进制文件，会自动从 GitHub 下载最新版本
-- **内置 Gate**：也可以将 Gate 二进制文件内置到项目中
-- **跨平台支持**：支持 Windows、Linux 和 macOS
-- **专业构建**：使用 Gradle 进行构建和依赖管理
-- **配置管理**：自动提取和管理配置文件
+- ✅ 面板友好，开箱即用
+- ✅ Docker 优化
+- ✅ 自动下载 Gate（支持多个国内加速镜像）
+- ✅ 跨平台支持（Windows/Linux/macOS）
+- ✅ 使用 Gradle 专业构建
 
 ## 快速开始
 
-### 前置要求
+### 在面板中部署
 
-- Java 11 或更高版本
-- Gradle 8.5（或使用项目自带的 Gradle Wrapper）
+1. **下载预构建的 JAR**：
+   ```bash
+   ./gradlew build
+   # 生成的 JAR 位于 build/libs/GateBridge-1.0.0.jar
+   ```
 
-### 构建前准备
+2. **准备文件**：
+   - 下载 Gate 二进制文件（使用加速链接）：
+     ```
+     https://gh-proxy.org/https://github.com/minekube/gate/releases/download/v1.2.5/gate-1.2.5-linux-amd64
+     ```
+   - 重命名为 `gate`（Linux）或 `gate.exe`（Windows）
+   - 复制 `gate.yml.example` 为 `gate.yml` 并修改配置
 
-**重要**：在首次构建之前，需要准备 Gate 二进制文件：
+3. **上传到面板**：
+   - 将 `GateBridge-1.0.0.jar`、`gate` 和 `gate.yml` 上传
+   - 启动命令：`java -jar GateBridge-1.0.0.jar`
 
-1. **下载 Gate**：
-   - 访问 [Gate GitHub Releases](https://github.com/minekube/gate/releases)
-   - 下载适合你操作系统的最新版本 Gate 二进制文件
-   - Windows 用户下载 `gate-*-windows-amd64.exe`
-   - Linux 用户下载 `gate-*-linux-amd64`
-   - macOS 用户下载 `gate-*-darwin-amd64`
+### 自动下载
 
-2. **重命名文件**：
-   - 将下载的文件重命名为 `gate.exe`（Windows）或 `gate`（Linux/macOS）
+首次运行时，如果本地没有 Gate 二进制文件，会自动从以下镜像下载：
 
-3. **放置文件**：
-   - 将重命名后的文件放入 `src/main/resources/` 目录
-   - 或者直接放在项目根目录（运行时会自动提取）
-
-4. **配置文件**：
-   - 复制 `gate.yml.example` 为 `gate.yml`
-   - 将 `gate.yml` 放入 `src/main/resources/` 目录
-   - 或者直接放在项目根目录（运行时会自动提取）
-
-### 构建项目
-
-```bash
-# 使用 Gradle Wrapper（推荐）
-./gradlew build
-
-# 或使用系统安装的 Gradle
-gradle build
-```
-
-### 运行项目
-
-```bash
-# 使用 Gradle Wrapper
-./gradlew run
-
-# 或直接运行生成的 JAR
-java -jar build/libs/GateBridge-1.0.0.jar
-```
-
-### 自动下载 Gate
-
-如果本地没有 Gate 二进制文件，程序会在首次运行时尝试自动下载：
-
-- Windows: 从 GitHub 下载 Windows 版本
-- Linux: 从 GitHub 下载 Linux 版本
-- macOS: 从 GitHub 下载 macOS 版本
-
-**注意**：自动下载功能需要网络连接，并且可能受网络环境影响。如果下载失败，请手动下载并放置文件。
-
-### 自定义 Gate 版本
-
-编辑 `gradle.properties` 文件，修改 `gateVersion` 属性：
-
-```properties
-gateVersion=1.2.5
-```
+- gh-proxy.org（全球加速）
+- v6.gh-proxy.org（国内优选）
+- cdn.gh-proxy.org（Fastly CDN）
+- edgeone.gh-proxy.org（全球加速）
+- hk.gh-proxy.org（香港线路）
 
 ## 配置
 
-Gate 的配置文件位于 `src/main/resources/gate.yml`。首次运行时，配置文件会被提取到工作目录。
+主要配置项（`gate.yml`）：
 
-主要配置项：
+```yaml
+config:
+  bind: 0.0.0.0:25565
+  lite:
+    enabled: true
+    routes:
+      - host: localhost
+        backend: localhost:25566
+```
 
-- `bind`: 监听地址（默认：0.0.0.0:25565）
-- `lite.enabled`: 是否启用 Lite 模式（默认：true）
-- `lite.routes`: 路由配置
+详细配置：[Gate 官方文档](https://gate.minekube.com/)
 
-详细配置请参考 [Gate 官方文档](https://gate.minekube.com/)。
+## 项目信息
 
-## 开发
-
-### 项目信息
-
-- **Group**: com.gatebridge
-- **Version**: 1.0.0
 - **Main Class**: com.gatebridge.ServerCore
+- **Version**: 1.0.0
+- **Java**: 11+
 
-### 运行测试
+## 常见问题
 
-```bash
-./gradlew test
-```
+**Q: 启动失败？**
+A: 确保 Gate 二进制文件有执行权限，配置文件存在，Java 版本 ≥ 11
 
-### 清理构建
-
-```bash
-./gradlew clean
-```
-
-## 许可证
-
-本项目遵循 Gate 的许可证。
+**Q: 如何更新 Gate？**
+A: 替换 `gate` 或 `gate.exe` 文件即可
 
 ## 相关链接
 
-- [Gate 官方网站](https://gate.minekube.com/)
+- [Gate 官网](https://gate.minekube.com/)
 - [Gate GitHub](https://github.com/minekube/gate)
-- [Gate 文档](https://gate.minekube.com/guide/)
+- [Gate Releases](https://github.com/minekube/gate/releases)
