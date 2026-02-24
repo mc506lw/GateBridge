@@ -71,16 +71,6 @@ GateBridge 是专为服务器面板和 Docker 环境设计的 Minecraft 代理�
    - 根据需要修改配置文件
    - 重启服务使配置生效
 
-### Docker 部署
-
-```dockerfile
-FROM openjdk:11-jre-slim
-WORKDIR /app
-COPY GateBridge-1.0.0.jar app.jar
-EXPOSE 25565
-CMD ["java", "-jar", "app.jar"]
-```
-
 ### 配置说明
 
 主要配置项（`gate.yml`）：

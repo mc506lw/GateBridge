@@ -15,21 +15,53 @@ public class ServerCore {
         System.out.println("[ServerCore] Initializing environment...");
         System.out.println("[ServerCore] Working Directory: " + dir);
 
-        if (!gateBinary.exists()) {
-            throw new FileNotFoundException(
-                    "Gate binary not found: " + gateBinary.getPath() + "\n" +
-                            "Please download Gate from https://github.com/minekube/gate/releases\n" +
-                            "and place it in the working directory.");
-        }
-
-        if (!gateConfig.exists()) {
-            throw new FileNotFoundException(
-                    "Gate config not found: " + gateConfig.getPath() + "\n" +
-                            "Please create a gate.yml configuration file in the working directory.");
-        }
+        setupGateBinary(gateBinary);
+        setupConfigFile(gateConfig);
 
         System.out.println("[ServerCore] Starting Gate binary...");
         startGate(gateBinary, gateConfig);
+    }
+
+    private static void setupGateBinary(File gateBinary) throws IOException {
+        if (gateBinary.exists()) {
+            System.out.println("[ServerCore] Gate binary already exists: " + gateBinary.getPath());
+            return;
+        }
+
+        System.out.println("[ServerCore] Gate binary not found, attempting to extract from JAR...");
+        boolean extracted = extractResource("/" + GATE_BINARY_NAME, gateBinary.getPath());
+
+        if (!extracted) {
+            throw new FileNotFoundException(
+                    "Gate binary not found in JAR resources. " +
+                            "Please download Gate from https://github.com/minekube/gate/releases " +
+                            "and place " + GATE_BINARY_NAME + " in working directory.");
+        }
+
+        if (!gateBinary.setExecutable(true, false)) {
+            System.err.println(
+                    "[ServerCore] Warning: Failed to set executable permission for '" + GATE_BINARY_NAME + "'.");
+        }
+
+        System.out.println("[ServerCore] Gate binary extracted successfully: " + gateBinary.getPath());
+    }
+
+    private static void setupConfigFile(File gateConfig) throws IOException {
+        if (gateConfig.exists()) {
+            System.out.println("[ServerCore] Config file already exists: " + gateConfig.getPath());
+            return;
+        }
+
+        System.out.println("[ServerCore] Config file not found, attempting to extract from JAR...");
+        boolean extracted = extractResource("/" + CONFIG_NAME, gateConfig.getPath());
+
+        if (!extracted) {
+            System.out.println("[ServerCore] Warning: Config file not found in JAR resources.");
+            System.out.println(
+                    "[ServerCore] Please create a " + CONFIG_NAME + " configuration file in working directory.");
+        } else {
+            System.out.println("[ServerCore] Config file extracted successfully: " + gateConfig.getPath());
+        }
     }
 
     private static void startGate(File gateBinary, File gateConfig) throws IOException, InterruptedException {
@@ -41,6 +73,23 @@ public class ServerCore {
         int exitCode = process.waitFor();
 
         System.out.println("[ServerCore] Gate process terminated with code: " + exitCode);
+    }
+
+    private static boolean extractResource(String resourcePath, String destinationPath) throws IOException {
+        try (InputStream in = ServerCore.class.getResourceAsStream(resourcePath);
+                OutputStream out = new FileOutputStream(destinationPath)) {
+
+            if (in == null) {
+                return false;
+            }
+
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = in.read(buffer)) > 0) {
+                out.write(buffer, 0, len);
+            }
+            return true;
+        }
     }
 
     private static boolean isWindows() {
